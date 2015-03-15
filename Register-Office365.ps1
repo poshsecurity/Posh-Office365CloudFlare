@@ -162,6 +162,25 @@ if ($VerificationValue)
     }
 }
 
+if ($MailEnable -or $LyncEnable)
+{
+    # MSOID
+    $MSOIDRecord  = [pscustomobject]@{
+        APIToken = $CloudFlareApiToken
+        Email    = $CloudFlareEmailAddress
+        Zone     = $Domain
+        Name     = 'msoid'
+        Content  = 'clientconfig.microsoftonline-p.net'
+        Type     = 'CNAME'
+        TTL      = 3600
+    }
+
+    try
+    {$null = $MSOIDRecord | New-CFDNSRecord}
+    catch
+    {Write-Error -Message "An error was encountered creating MSOID record, $_"}
+}
+
 if ($MailEnable)
 {
     'This script will create the following records to enable mail delivery via Office 365:'
@@ -201,23 +220,7 @@ if ($MailEnable)
     {$null = $AutoDiscoverRecord | New-CFDNSRecord}
     catch
     {Write-Error -Message "An error was encountered creating AutoDiscover record, $_"}
-
-    # MSOID
-    $MSOIDRecord  = [pscustomobject]@{
-        APIToken = $CloudFlareApiToken
-        Email    = $CloudFlareEmailAddress
-        Zone     = $Domain
-        Name     = 'msoid'
-        Content  = 'clientconfig.microsoftonline-p.net'
-        Type     = 'CNAME'
-        TTL      = 3600
-    }
-    
-    try
-    {$null = $MSOIDRecord | New-CFDNSRecord}
-    catch
-    {Write-Error -Message "An error was encountered creating MSOID record, $_"}
-
+  
     # SPF
     $SPFRecord  = [pscustomobject]@{
         APIToken = $CloudFlareApiToken
