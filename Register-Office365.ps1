@@ -124,8 +124,8 @@ Param
     $MDMEnable
 )
 
-if (-not $MailEnable -and -not $LyncEnable -and -not $VerificationValue)
-{ Write-Error -Message 'You must select either: -VerificationValue, -MailEnable, -LyncEnabled or any combination' }
+if (-not $MailEnable -and -not $LyncEnable -and -not $VerificationValue -and -not $MDMEnable)
+{ Write-Error -Message 'You must select either: -VerificationValue, -MailEnable, -LyncEnabled, -MDMEnable or any combination' }
 
 if ($VerificationValue)
 {
