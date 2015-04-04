@@ -6,8 +6,8 @@
     The aim for this script is to allow for an automated provisioning of domains with CloudFlare hosted DNS to support Office 365.
 
     The entries that need to be created are actuallly pretty simple, with there only two entires that change:
-        1. The verification entry
-        2. The MX record.
+    1. The verification entry
+    2. The MX record.
 
     The MX record always follows a specific pattern, so we can calculate that.
 
@@ -40,6 +40,9 @@
 
     .PARAMETER LyncEnable
     Specifies if script shoudl create DNS records for Lync, this includes SIP and Service (SRV) Records.
+
+    .PARAMETER MDMEnable
+    Specify if the entries to support enterprise MDM should be created. This includes EnterpriseEnrollment and EnterpriseRegistration CNAME records.
 
     .INPUTS
     This takes no input from the pipeline.
@@ -114,11 +117,15 @@ Param
 
     [Parameter(mandatory = $False)]
     [switch]
-    $LyncEnable
+    $LyncEnable,
+
+    [Parameter(mandatory = $False)]
+    [switch]
+    $MDMEnable
 )
 
 if (-not $MailEnable -and -not $LyncEnable -and -not $VerificationValue)
-{ Write-Error "You must select either: -VerificationValue, -MailEnable, -LyncEnabled or any combination" }
+{ Write-Error -Message 'You must select either: -VerificationValue, -MailEnable, -LyncEnabled or any combination' }
 
 if ($VerificationValue)
 {
@@ -360,3 +367,41 @@ if ($LyncEnable)
     {Write-Error -Message "An error was encountered creating _sipfederationtls record, $_"}
 }
 
+if ($MDMEnable)
+{
+    'This script will create the following records to enable MDM functionality in Office 365:'
+    "`tEnterpriseEnrollment"
+    "`tEnterpriseRegistration"
+
+    # LyncDiscover
+    $EnterpriseEnrollmentRecord  = [pscustomobject]@{
+        APIToken = $CloudFlareApiToken
+        Email    = $CloudFlareEmailAddress
+        Zone     = $Domain
+        Name     = 'EnterpriseEnrollment'
+        Content  = 'EnterpriseEnrollment.manage.microsoft.com'
+        Type     = 'CNAME'
+        TTL      = 3600
+    }
+
+    try
+    {$null = $EnterpriseEnrollmentRecord | New-CFDNSRecord}
+    catch
+    {Write-Error -Message "An error was encountered creating EnterpriseEnrollment record, $_"}
+
+    # EnterpriseRegistration
+    $EnterpriseRegistrationRecord  = [pscustomobject]@{
+        APIToken = $CloudFlareApiToken
+        Email    = $CloudFlareEmailAddress
+        Zone     = $Domain
+        Name     = 'EnterpriseRegistration'
+        Content  = 'EnterpriseRegistration.windows.net'
+        Type     = 'CNAME'
+        TTL      = 3600
+    }
+
+    try
+    {$null = $EnterpriseRegistrationRecord | New-CFDNSRecord}
+    catch
+    {Write-Error -Message "An error was encountered creating EnterpriseRegistration record, $_"}
+}
